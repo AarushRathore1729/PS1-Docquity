@@ -1,22 +1,109 @@
 # URL Shortener
 
-A simple, robust, and extensible URL shortening service built with Node.js, Express, MongoDB, and Redis. Features RESTful APIs for shortening, managing, and redirecting URLs, plus user management and Swagger API docs.
+A simple, robust, and extensible URL shortening service built with Node.js, Express, and MongoDB. Features RESTful APIs for shortening, managing, and redirecting URLs, plus user management and Swagger API docs.
 
 ## Features
 
 - Shorten long URLs to compact, shareable links
 - Custom short codes and expiration support
 - User management (CRUD)
-- MongoDB for persistent storage
-- Redis for caching and performance
-- Health check endpoints for server, database, and cache
+- MongoDB for persistent storage (via Prisma ORM)
+- Health check endpoints for server and database
 - Swagger UI for interactive API documentation
+
+## System Design
+
+```mermaid
+graph TD
+  %% Client Layer
+  Client(Client/Browser)
+  
+  %% API Layer
+  subgraph "API Layer (Express.js)"
+    API[API Endpoints]
+    SWAGGER[Swagger Documentation]
+    HEALTH[Health Check Endpoint]
+  end
+  
+  %% Controller Layer
+  subgraph "Controller Layer"
+    URLC[URL Controller]
+    USERC[User Controller]
+  end
+  
+  %% Service Layer
+  subgraph "Service Layer"
+    URLS[URL Service]
+    USERS[User Service]
+  end
+  
+  %% Repository Layer
+  subgraph "Repository Layer"
+    URLR[URL Repository]
+    USERR[User Repository]
+  end
+  
+  %% Database Layer
+  subgraph "Database Layer"
+    PRISMA[Prisma Client]
+    DB[(MongoDB)]
+  end
+  
+  %% Utils
+  UTILS[Short URL Generator]
+  
+  %% Data Flow - Requests
+  Client -->|HTTP Request| API
+  API -->|Route to| URLC
+  API -->|Route to| USERC
+  API -->|API Docs| SWAGGER
+  API -->|Health Status| HEALTH
+  
+  %% Controller to Service
+  URLC -->|Process Request| URLS
+  USERC -->|Process Request| USERS
+  
+  %% Utils usage
+  URLS -->|Generate ShortCode| UTILS
+  
+  %% Service to Repository
+  URLS -->|CRUD Operations| URLR
+  USERS -->|CRUD Operations| USERR
+  
+  %% Repository to Database
+  URLR -->|Query/Mutate| PRISMA
+  USERR -->|Query/Mutate| PRISMA
+  PRISMA -->|Store/Retrieve Data| DB
+  
+  %% URL Redirection Flow
+  Client -->|Access Short URL| API
+  API -->|Get Original URL| URLC
+  URLC -->|Find URL| URLS
+  URLS -->|Lookup ShortCode| URLR
+  URLS -->|Redirect| Client
+  
+  %% Styles
+  classDef client fill:#FFD700,stroke:#333,stroke-width:2px
+  classDef api fill:#90EE90,stroke:#333,stroke-width:2px
+  classDef controller fill:#ADD8E6,stroke:#333,stroke-width:2px
+  classDef service fill:#FFA07A,stroke:#333,stroke-width:2px
+  classDef repository fill:#D8BFD8,stroke:#333,stroke-width:2px
+  classDef database fill:#87CEFA,stroke:#333,stroke-width:2px
+  classDef utils fill:#F0F8FF,stroke:#333,stroke-width:1px
+  
+  class Client client
+  class API,SWAGGER,HEALTH api
+  class URLC,USERC controller
+  class URLS,USERS service
+  class URLR,USERR repository
+  class PRISMA,DB database
+  class UTILS utils
+```
 
 ## Tech Stack
 
 - Node.js, Express
-- MongoDB (via Mongoose)
-- Redis (via ioredis)
+- MongoDB (via Prisma ORM)
 - Swagger (OpenAPI 3.0)
 - NanoID for unique short codes
 
@@ -26,7 +113,6 @@ A simple, robust, and extensible URL shortening service built with Node.js, Expr
 
 - Node.js (v16+ recommended)
 - MongoDB instance (local or cloud)
-- Redis instance (local or cloud)
 
 ### Installation
 
@@ -42,8 +128,7 @@ Create a `.env` file in the root directory:
 
 ```
 PORT=8080
-MONGO_URI=mongodb://localhost:27017/urlshorten
-REDIS_URI=redis://localhost:6379
+DATABASE_URL=mongodb://localhost:27017/urlshorten
 NODE_ENV=development
 ```
 
@@ -54,6 +139,23 @@ npm start
 ```
 
 The server will run on `http://localhost:8080`.
+
+### Database Setup with Prisma
+
+After installing dependencies, you need to generate the Prisma client and push the schema:
+
+```bash
+npx prisma generate   # Generate Prisma client code
+npx prisma db push    # Push the schema to your MongoDB instance
+```
+
+To view and manage your data with Prisma Studio:
+
+```bash
+npx prisma studio
+```
+
+This will open a web interface on `http://localhost:5555` where you can browse and edit your data.
 
 ## API Documentation
 
@@ -121,8 +223,22 @@ curl -X POST http://localhost:8080/api/shorten \
 
 ## Development
 
-- All code is in the main project folder, organized by feature (controllers, services, models, routes, etc).
-- API documentation is auto-generated from JSDoc comments using Swagger.
+- Project structure follows a clean architecture pattern: routes → controllers → services → repositories → database
+- Database operations handled by Prisma ORM, a modern and type-safe ORM for Node.js
+- API documentation is auto-generated from JSDoc comments using Swagger
+
+### Prisma ORM Integration
+
+This project uses Prisma ORM for database operations. Key benefits include:
+
+- Type-safe database queries with auto-completion
+- Automatic schema migrations with `prisma db push`
+- Database inspection and manipulation through Prisma Studio
+- No need for manual Mongoose model definitions
+
+The database schema is defined in `prisma/schema.prisma` with two main models:
+- `User`: Stores user data
+- `ShortUrl`: Stores short URLs with their original counterparts
 
 ## License
 

@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
@@ -14,11 +13,9 @@ app.use(express.json());
  app.use(cors());
 
 const connectDB = require('./config/database');
-const redisClient = require('./config/redisClient');
 
 const urlRoutes = require('./routes/urlRoutes');
 const userRoutes = require('./routes/userRoutes');
-const testRoutes = require('./routes/testRoutes');
 
 // const urlController = require('./controllers/urlController');
 // const UrlService = require('./services/UrlService');
@@ -31,7 +28,6 @@ const testRoutes = require('./routes/testRoutes');
 connectDB();
 
 app.use('/api/shorten', urlRoutes);
-app.use('/test', testRoutes);
 app.use('/api/users', userRoutes);
 
 //Healthcheck endpoint
@@ -39,33 +35,19 @@ app.get('/health', async (req, res) => {
   const healthStatus = {
     "Express Server": 'UP',
     database: 'DOWN',
-    cache: 'DOWN',
     timestamp: new Date().toISOString()
   };
 
   try {
-    await mongoose.connection.db.collection('healthchecks').findOne({});
+    const prisma = require('./config/prismaClient');
+    await prisma.$queryRaw`SELECT 1`;
     healthStatus.database = 'UP';
   } catch (dbErr) {
-    console.error('Health check: MongoDB connection failed:', dbErr);
+    console.error('Health check: Database connection failed:', dbErr);
     healthStatus.database = 'DOWN';
   }
 
-  try {
-    await redisClient.ping(); 
-    await redisClient.set('healthcheck_key', 'ok', 'EX', 10); 
-    const testValue = await redisClient.get('healthcheck_key'); 
-    if (testValue === 'ok') {
-      healthStatus.cache = 'UP';
-    } else {
-      healthStatus.cache = 'DOWN';
-    }
-  } catch (redisErr) {
-    console.error('Health check: Redis connection failed:', redisErr);
-    healthStatus.cache = 'DOWN';
-  }
-
-  if (healthStatus.database === 'UP' && healthStatus.cache === 'UP') {
+  if (healthStatus.database === 'UP') {
     res.status(200).json(healthStatus);
   } else {
     res.status(500).json(healthStatus);
