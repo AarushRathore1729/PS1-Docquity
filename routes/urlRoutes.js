@@ -33,10 +33,18 @@ const router = express.Router();
  *           format: date-time
  *           description: Creation timestamp
  *           example: "2023-01-01T00:00:00.000Z"
- *         __v:
- *           type: integer
- *           description: MongoDB version key
- *           example: 0
+ *         expires_at:
+ *           type: string
+ *           format: date-time
+ *           description: Expiration timestamp (optional)
+ *           example: "2025-01-01T00:00:00.000Z"
+ *         metadata:
+ *           type: object
+ *           description: Additional metadata (optional)
+ *         custom_alias:
+ *           type: string
+ *           description: Custom alias (optional)
+ *           example: "my-custom-link"
  *     
  *     UrlResponse:
  *       type: object
@@ -75,12 +83,21 @@ const router = express.Router();
  *     CreateUrlRequest:
  *       type: object
  *       required:
- *         - url
+ *         - original_url
  *       properties:
- *         url:
+ *         original_url:
  *           type: string
  *           description: The URL to be shortened
  *           example: "https://www.google.com"
+ *         short_code:
+ *           type: string
+ *           description: Optional custom short code
+ *           example: "mylink"
+ *         expires_at:
+ *           type: string
+ *           format: date-time
+ *           description: Optional expiration date
+ *           example: "2025-12-31T23:59:59.000Z"
  *     
  *     CreateUrlResponse:
  *       type: object
@@ -92,18 +109,27 @@ const router = express.Router();
  *         data:
  *           type: object
  *           properties:
- *             shortUrl:
+ *             id:
  *               type: string
- *               description: The shortened URL
- *               example: "http://localhost:8080/api/shorten/redirect/abc123"
- *             originalUrl:
+ *               description: MongoDB ObjectId
+ *               example: "507f1f77bcf86cd799439011"
+ *             original_url:
  *               type: string
  *               description: The original URL
  *               example: "https://www.google.com"
- *             shortCode:
+ *             short_code:
  *               type: string
  *               description: The short code
  *               example: "abc123"
+ *             created_at:
+ *               type: string
+ *               format: date-time
+ *               description: Creation timestamp
+ *               example: "2023-01-01T00:00:00.000Z"
+ *         short_url:
+ *           type: string
+ *           description: The complete shortened URL
+ *           example: "http://localhost:8080/api/shorten/redirect/abc123"
  *         statusCode:
  *           type: integer
  *           description: HTTP status code
@@ -193,7 +219,7 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/', (req, res) => urlController.getAllUrls(req, res));
+router.get('/', urlController.getAllUrls);
 
 /**
  * @swagger
@@ -230,7 +256,7 @@ router.get('/', (req, res) => urlController.getAllUrls(req, res));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/:id', (req, res) => urlController.getUrlById(req, res));
+router.get('/:id', urlController.getUrlById);
 
 /**
  * @swagger
@@ -265,7 +291,7 @@ router.get('/:id', (req, res) => urlController.getUrlById(req, res));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.post('/', (req, res) => urlController.createShortUrl(req, res));
+router.post('/', urlController.createShortUrl);
 
 /**
  * @swagger
@@ -314,7 +340,7 @@ router.post('/', (req, res) => urlController.createShortUrl(req, res));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.put('/:id', (req, res) => urlController.updateUrlById(req, res));
+router.put('/:id', urlController.updateUrlById);
 
 /**
  * @swagger
@@ -363,7 +389,7 @@ router.put('/:id', (req, res) => urlController.updateUrlById(req, res));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.put('/short/:shortCode', (req, res) => urlController.updateUrlByShortCode(req, res));
+router.put('/short/:shortCode', urlController.updateUrlByShortCode);
 
 /**
  * @swagger
@@ -400,7 +426,7 @@ router.put('/short/:shortCode', (req, res) => urlController.updateUrlByShortCode
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete('/:id', (req, res) => urlController.deleteUrlById(req, res));
+router.delete('/:id', urlController.deleteUrlById);
 
 /**
  * @swagger
@@ -437,7 +463,7 @@ router.delete('/:id', (req, res) => urlController.deleteUrlById(req, res));
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.delete('/short/:shortCode', (req, res) => urlController.deleteUrlByShortCode(req, res));
+router.delete('/short/:shortCode', urlController.deleteUrlByShortCode);
 
 /**
  * @swagger
@@ -489,6 +515,6 @@ router.delete('/short/:shortCode', (req, res) => urlController.deleteUrlByShortC
  *             schema:
  *               $ref: '#/components/schemas/ErrorResponse'
  */
-router.get('/redirect/:shortCode', (req, res) => urlController.redirectToOriginal(req, res));
+router.get('/redirect/:shortCode', urlController.redirectToOriginal);
 
 module.exports = router;

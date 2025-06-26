@@ -9,9 +9,6 @@ const router = express.Router();
  *   schemas:
  *     User:
  *       type: object
- *       required:
- *         - name
- *         - email
  *       properties:
  *         _id:
  *           type: string
@@ -107,7 +104,7 @@ const router = express.Router();
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/', (req, res) => userController.getAllUsers(req, res));
+router.get('/', userController.getAllUsers);
 
 /**
  * @swagger
@@ -157,7 +154,7 @@ router.get('/', (req, res) => userController.getAllUsers(req, res));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:id', (req, res) => userController.getUserById(req, res));
+router.get('/:id', userController.getUserById);
 
 /**
  * @swagger
@@ -207,7 +204,7 @@ router.get('/:id', (req, res) => userController.getUserById(req, res));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/', (req, res) => userController.createUser(req, res));
+router.post('/', userController.createUser);
 
 /**
  * @swagger
@@ -283,7 +280,7 @@ router.post('/', (req, res) => userController.createUser(req, res));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:id', (req, res) => userController.updateUserById(req, res));
+router.put('/:id', userController.updateUserById);
 
 /**
  * @swagger
@@ -334,6 +331,6 @@ router.put('/:id', (req, res) => userController.updateUserById(req, res));
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.delete('/:id', (req, res) => userController.deleteUserById(req, res));
+router.delete('/:id', userController.deleteUserById);
 
 module.exports = router;

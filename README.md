@@ -7,7 +7,7 @@ A simple, robust, and extensible URL shortening service built with Node.js, Expr
 - Shorten long URLs to compact, shareable links
 - Custom short codes and expiration support
 - User management (CRUD)
-- MongoDB for persistent storage (via Prisma ORM)
+- MongoDB for persistent storage (via Mongoose ODM)
 - Health check endpoints for server and database
 - Swagger UI for interactive API documentation
 
@@ -103,7 +103,7 @@ graph TD
 ## Tech Stack
 
 - Node.js, Express
-- MongoDB (via Prisma ORM)
+- MongoDB (via Mongoose ODM)
 - Swagger (OpenAPI 3.0)
 - NanoID for unique short codes
 
@@ -139,23 +139,6 @@ npm start
 ```
 
 The server will run on `http://localhost:8080`.
-
-### Database Setup with Prisma
-
-After installing dependencies, you need to generate the Prisma client and push the schema:
-
-```bash
-npx prisma generate   # Generate Prisma client code
-npx prisma db push    # Push the schema to your MongoDB instance
-```
-
-To view and manage your data with Prisma Studio:
-
-```bash
-npx prisma studio
-```
-
-This will open a web interface on `http://localhost:5555` where you can browse and edit your data.
 
 ## API Documentation
 
@@ -229,16 +212,16 @@ curl -X POST http://localhost:8080/api/shorten \
 
 ### Prisma ORM Integration
 
-This project uses Prisma ORM for database operations. Key benefits include:
+This project uses Mongoose ODM for database operations. Key features include:
 
-- Type-safe database queries with auto-completion
-- Automatic schema migrations with `prisma db push`
-- Database inspection and manipulation through Prisma Studio
-- No need for manual Mongoose model definitions
+- Simple and elegant MongoDB object modeling
+- Built-in type casting, validation, query building, and business logic hooks
+- Flexible schema definitions with validation
+- Rich query API
 
-The database schema is defined in `prisma/schema.prisma` with two main models:
-- `User`: Stores user data
-- `ShortUrl`: Stores short URLs with their original counterparts
+The database schemas are defined in the `models/` directory:
+- `User`: Stores user data with timestamps
+- `ShortUrl`: Stores short URLs with their original counterparts and metadata
 
 ## License
 

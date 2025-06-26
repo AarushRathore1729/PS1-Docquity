@@ -1,5 +1,5 @@
 const urlRepository = require('../repositories/urlRepository');
-const { generateShortCode } = require('../utils/shortUrlGenerator');
+const generateShortCode = require('../utils/shortUrlGenerator');
 
 class UrlService {
   async createShortUrl(data, host) {

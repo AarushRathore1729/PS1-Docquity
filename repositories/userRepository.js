@@ -1,38 +1,29 @@
-// filepath: /media/aarush1729/0F6307FC0F6307FC/URL-Shorten/repositories/userRepository.js
-const prisma = require('../config/prismaClient');
+const User = require('../models/User');
 
 class UserRepository {
   create(userData) {
-    return prisma.user.create({
-      data: userData
-    });
+    const user = new User(userData);
+    return user.save();
   }
 
   findAll() {
-    return prisma.user.findMany({
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    return User.find().sort({ createdAt: -1 });
   }
 
   findById(id) {
-    return prisma.user.findUnique({
-      where: { id }
-    });
+    return User.findById(id);
   }
 
   updateById(id, updateData) {
-    return prisma.user.update({
-      where: { id },
-      data: updateData
-    });
+    return User.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
   }
 
   deleteById(id) {
-    return prisma.user.delete({
-      where: { id }
-    });
+    return User.findByIdAndDelete(id);
   }
 }
 

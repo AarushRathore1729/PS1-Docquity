@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-// const Redis = require('ioredis');
 const { swaggerUi, specs } = require('./config/swagger');
 
 const PORT = process.env.PORT || 8080;
@@ -13,6 +13,7 @@ app.use(express.json());
  app.use(cors());
 
 const connectDB = require('./config/database');
+const { globalErrorHandler, notFound } = require('./middleware/errorHandler');
 
 const urlRoutes = require('./routes/urlRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -39,11 +40,10 @@ app.get('/health', async (req, res) => {
   };
 
   try {
-    const prisma = require('./config/prismaClient');
-    await prisma.$queryRaw`SELECT 1`;
+    await mongoose.connection.db.collection('healthchecks').findOne({});
     healthStatus.database = 'UP';
   } catch (dbErr) {
-    console.error('Health check: Database connection failed:', dbErr);
+    console.error('Health check: MongoDB connection failed:', dbErr);
     healthStatus.database = 'DOWN';
   }
 
@@ -56,24 +56,22 @@ app.get('/health', async (req, res) => {
 
 
   app.get('/', (req, res) => {
-    res.send('API is up and running!');
+    res.json({ 
+      message: 'URL Shortener API is up and running!',
+      version: '1.0.0',
+      documentation: '/api-docs'
+    });
   });
 
-  //Global error handler
-  app.use((err, req, res, next) => {
-  console.error('Global error:', err);
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'production' ? 'Something went wrong' : err.message
-  });
-});
+// 404 handler for undefined routes
+app.use(notFound);
 
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+//Global error handler
+app.use(globalErrorHandler);
 
 app.listen(PORT, () => {
   console.log(`Express server running on port ${PORT}`);
+  console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
 });
 
 module.exports = app;

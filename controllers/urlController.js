@@ -1,51 +1,71 @@
 const urlService = require('../services/urlService');
+const { catchAsync } = require('../middleware/errorHandler');
+const { ValidationError, NotFoundError } = require('../middleware/errors');
 
 class UrlController {
   handleResponse(result, res) {
-    const status = result.statusCode || (result.success ? 200 : 500);
+    if (!result.success) {
+      // Create appropriate error based on status code
+      switch (result.statusCode) {
+        case 400:
+          throw new ValidationError(result.message);
+        case 404:
+          throw new NotFoundError(result.message);
+        case 409:
+          throw new ValidationError(result.message);
+        default:
+          throw new Error(result.message || 'Internal server error');
+      }
+    }
+    
+    const status = result.statusCode || 200;
     res.status(status).json(result);
   }
 
-  async createShortUrl(req, res) {
+  createShortUrl = catchAsync(async (req, res) => {
     const host = `${req.protocol}://${req.get('host')}`;
     const result = await urlService.createShortUrl(req.body, host);
     this.handleResponse(result, res);
-  }
+  });
 
-  async getAllUrls(req, res) {
+  getAllUrls = catchAsync(async (req, res) => {
     const result = await urlService.getAllUrls();
     this.handleResponse(result, res);
-  }
+  });
 
-  async getUrlById(req, res) {
+  getUrlById = catchAsync(async (req, res) => {
     const result = await urlService.getUrlById(req.params.id);
     this.handleResponse(result, res);
-  }
+  });
 
-  async updateUrlById(req, res) {
+  updateUrlById = catchAsync(async (req, res) => {
     const result = await urlService.updateUrlById(req.params.id, req.body);
     this.handleResponse(result, res);
-  }
+  });
 
-  async updateUrlByShortCode(req, res) {
+  updateUrlByShortCode = catchAsync(async (req, res) => {
     const result = await urlService.updateUrlByShortCode(req.params.shortCode, req.body);
     this.handleResponse(result, res);
-  }
+  });
 
-  async deleteUrlById(req, res) {
+  deleteUrlById = catchAsync(async (req, res) => {
     const result = await urlService.deleteUrlById(req.params.id);
     this.handleResponse(result, res);
-  }
+  });
 
-  async deleteUrlByShortCode(req, res) {
+  deleteUrlByShortCode = catchAsync(async (req, res) => {
     const result = await urlService.deleteUrlByShortCode(req.params.shortCode);
     this.handleResponse(result, res);
-  }
+  });
 
-  async redirectToOriginal(req, res) {
+  redirectToOriginal = catchAsync(async (req, res) => {
     const result = await urlService.redirectToOriginal(req.params.shortCode);
-    result.success ? res.redirect(result.redirectUrl) : this.handleResponse(result, res);
-  }
+    if (result.success) {
+      res.redirect(result.redirectUrl);
+    } else {
+      this.handleResponse(result, res);
+    }
+  });
 }
 
 module.exports = new UrlController();
